@@ -1,0 +1,10 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"nextflow-sandbox.executablePath": "/home/wojtek/tools/nextflow/nextflow"
+	}
+}
