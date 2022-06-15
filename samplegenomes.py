@@ -13,7 +13,7 @@ random.seed(rseed)
 
 f = open(infile, "r")
 dat = [x.split("\t") for x in f.read().split("\n") if len(x) > 0 and not x[0]=="#"]
-dat = [x for x in dat if x[11] == "Complete Genome"]
+dat = [x for x in dat if x[11] == "Complete Genome" or x[11] == "Chromosome"]
 f.close()
 print(len(dat))
 orgs = dict()
@@ -26,10 +26,14 @@ for line in dat:
         orgs[org] = []
     orgs[org] += [line]
 
+numwritten = 0
 f = open(outfile, "w")
 for org in orgs:
     selected = random.choice(orgs[org])
     url = selected[-4]
     f.write(url + "/" + url.split("/")[-1] + "_genomic.gbff.gz")
     f.write("\n")
+    numwritten += 1
+    if numwritten >= numgenomes:
+        break
 f.close()
