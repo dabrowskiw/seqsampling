@@ -48,9 +48,22 @@ process labelFiles {
         path infile
     output:
         path "${infile}.labelled", emit: labelled
+        path "${infile}.stats", emit: stats
     script:
     """
-    python ${baseDir}/labelGenome.py ${infile} ${infile}.labelled
+    python ${baseDir}/labelGenome.py ${infile} ${infile}.labelled ${infile}.stats
+    """
+}
+
+process collectStats {
+    publishDir "${params.outdir}", mode: "copy", overwrite: true
+    input:
+        path fullstatfile
+    output:
+        path "stats.txt"
+    script:
+    """
+    python ${baseDir}/combinestats.py ${fullstatfile} stats.txt
     """
 }
 
@@ -58,5 +71,6 @@ workflow {
     summary = getSummary()
     filelist = selectFiles(summary, params.rseed)
     genomes = downloadFiles(filelist).genomes
-    labelFiles(genomes.flatten())
+    allstats = labelFiles(genomes.flatten()).stats.collectFile(name: "allstats.txt", newLine: false)
+    collectStats(allstats)
 }
