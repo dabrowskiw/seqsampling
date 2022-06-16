@@ -4,9 +4,10 @@ params.outdir="./results"
 params.rseed=1482
 //params.numgenomes=100
 params.numgenomes=3
+params.storeDir="/home/wojtek/datacache"
 
 process getSummary {
-    storeDir "/home/wojtek/datacache"
+    storeDir "${params.storeDir}"
     publishDir "${params.outdir}", mode: "copy", overwrite: true
     input:
         val orgtype
@@ -32,7 +33,7 @@ process selectFiles {
 }
 
 process downloadFiles {
-    storeDir "/home/wojtek/datacache"
+    storeDir "${params.storeDir}"
     publishDir "${params.outdir}", mode: "copy", overwrite: true
     input:
         tuple path(filelist), val(orgtype)
@@ -49,7 +50,7 @@ process downloadFiles {
 }
 
 process labelFiles {
-    storeDir "/home/wojtek/datacache/labelled"
+    storeDir "${params.storeDir}"
     publishDir "${params.outdir}/labelled", mode: "copy", overwrite: true
     input:
         tuple path(infile), val(orgtype)
