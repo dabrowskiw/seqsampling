@@ -2,34 +2,32 @@ nextflow.enable.dsl=2
 
 params.outdir="./results"
 params.rseed=1482
-//params.numgenomes=100
-params.numgenomes=3
 params.storeDir="/home/wojtek/datacache"
 
 process getSummary {
     storeDir "${params.storeDir}"
     publishDir "${params.outdir}", mode: "copy", overwrite: true
     input:
-        val orgtype
+        val orgdata
     output:
-        tuple path("${orgtype}.txt"), val(orgtype)
+        tuple path("${orgdata[0]}.txt"), val(orgdata)
     script:
     """
-    wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/${orgtype}/assembly_summary.txt
-    mv assembly_summary.txt ${orgtype}.txt
+    wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/${orgdata[0]}/assembly_summary.txt
+    mv assembly_summary.txt ${orgdata[0]}.txt
     """
 }
 
 process selectFiles {
+    publishDir "${params.outdir}", mode: "copy", overwrite: true
     input:
-        tuple path(summary), val(orgtype)
+        tuple path(summary), val(orgdata)
         val rseed
     output:
-        path "${orgtype}_filelist.txt", emit: filelist
-        val orgtype, emit: orgtype
+        tuple path("${orgdata[0]}_filelist.txt"), val("${orgdata[0]}")
     script:
     """
-    python ${baseDir}/samplegenomes.py ${summary} ${orgtype}_filelist.txt genus ${rseed} ${params.numgenomes}
+    python ${baseDir}/samplegenomes.py ${summary} ${orgdata[0]}_filelist.txt genus ${rseed} ${orgdata[1]}
     """
 }
 
@@ -39,11 +37,11 @@ process downloadFile {
     input:
         tuple val(url), val(orgtype)
     output: 
-        tuple path("${orgtype}_genomes/${file(url.trim()).getName()}"), val(orgtype)
+        tuple path("genomes/${orgtype}/${file(url.trim()).getName()}"), val(orgtype)
     script:
     """
-    mkdir ${orgtype}_genomes
-    cd ${orgtype}_genomes
+    mkdir -p genomes/${orgtype}
+    cd genomes/${orgtype}
     wget ${url}
     """
 }
@@ -76,11 +74,9 @@ process collectStats {
 }
 
 workflow {
-    summary = getSummary(Channel.of("viral", "bacteria"))
-//    summary = getSummary(Channel.of("viral"))
+    summary = getSummary(Channel.of(["viral", 3], ["bacteria", 2]))
     filelist = selectFiles(summary, params.rseed)
-    df = downloadFile(filelist.filelist.splitText().combine(filelist.orgtype))
-    df.view()
+    df = downloadFile(filelist.splitText())
     stats = labelFile(df).stats.collectFile() { item -> ["${item[1]}_stats", item[0] ] }
     collectStats(stats)
 }
