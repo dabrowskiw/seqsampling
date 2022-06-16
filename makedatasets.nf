@@ -10,11 +10,13 @@ process getSummary {
     input:
         val orgdata
     output:
-        tuple path("${orgdata[0]}.txt"), val(orgdata)
+        tuple path("filelists/${orgdata[0]}_assembly_summary.txt"), val(orgdata)
     script:
     """
+    mkdir filelists
+    cd filelists
     wget https://ftp.ncbi.nlm.nih.gov/genomes/refseq/${orgdata[0]}/assembly_summary.txt
-    mv assembly_summary.txt ${orgdata[0]}.txt
+    mv assembly_summary.txt ${orgdata[0]}_assembly_summary.txt
     """
 }
 
@@ -24,10 +26,11 @@ process selectFiles {
         tuple path(summary), val(orgdata)
         val rseed
     output:
-        tuple path("${orgdata[0]}_filelist.txt"), val("${orgdata[0]}")
+        tuple path("filelists/${orgdata[0]}_filelist.txt"), val("${orgdata[0]}")
     script:
     """
-    python ${baseDir}/samplegenomes.py ${summary} ${orgdata[0]}_filelist.txt genus ${rseed} ${orgdata[1]}
+    mkdir filelists
+    python ${baseDir}/samplegenomes.py ${summary} filelists/${orgdata[0]}_filelist.txt genus ${rseed} ${orgdata[1]}
     """
 }
 
