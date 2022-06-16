@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 params.outdir="./results"
 params.rseed=1482
-params.storeDir="/home/wojtek/datacache"
+params.storeDir="./cache"
 
 process getSummary {
     storeDir "${params.storeDir}"
@@ -77,7 +77,7 @@ process collectStats {
 }
 
 workflow {
-    summary = getSummary(Channel.of(["viral", 3], ["bacteria", 2]))
+    summary = getSummary(Channel.of(["viral", 20000], ["bacteria", 2000], ["vertebrate_mammalian", 100]))
     filelist = selectFiles(summary, params.rseed)
     df = downloadFile(filelist.splitText())
     stats = labelFile(df).stats.collectFile() { item -> ["${item[1]}_stats", item[0] ] }
