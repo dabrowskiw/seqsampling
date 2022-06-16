@@ -37,6 +37,7 @@ process selectFiles {
 process downloadFile {
     storeDir "${params.storeDir}"
     publishDir "${params.outdir}", mode: "copy", overwrite: true
+    maxForks 5
     input:
         tuple val(url), val(orgtype)
     output: 
