@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 params.outdir="./results"
 params.rseed=1482
-params.storeDir="/home/wojtek/datacache"
+params.storeDir="./cache"
 
 process getSummary {
     storeDir "${params.storeDir}"
