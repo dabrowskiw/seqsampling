@@ -25,31 +25,30 @@ process selectFiles {
         tuple path(summary), val(orgtype)
         val rseed
     output:
-        tuple path("${orgtype}_filelist.txt"), val(orgtype)
+        path "${orgtype}_filelist.txt", emit: filelist
+        val orgtype, emit: orgtype
     script:
     """
     python ${baseDir}/samplegenomes.py ${summary} ${orgtype}_filelist.txt genus ${rseed} ${params.numgenomes}
     """
 }
 
-process downloadFiles {
+process downloadFile {
     storeDir "${params.storeDir}"
     publishDir "${params.outdir}", mode: "copy", overwrite: true
     input:
-        tuple path(filelist), val(orgtype)
+        tuple val(url), val(orgtype)
     output: 
-        path "${orgtype}_genomes", emit: genomedir
-        path "${orgtype}_genomes/*.gbff.gz", emit: genomes
-        val orgtype, emit: orgtype
+        tuple path("${orgtype}_genomes/${file(url.trim()).getName()}"), val(orgtype)
     script:
     """
     mkdir ${orgtype}_genomes
     cd ${orgtype}_genomes
-    wget -i ../${filelist}
+    wget ${url}
     """
 }
 
-process labelFiles {
+process labelFile {
     storeDir "${params.storeDir}"
     publishDir "${params.outdir}/labelled", mode: "copy", overwrite: true
     input:
@@ -78,12 +77,10 @@ process collectStats {
 
 workflow {
     summary = getSummary(Channel.of("viral", "bacteria"))
-    summary.view()
+//    summary = getSummary(Channel.of("viral"))
     filelist = selectFiles(summary, params.rseed)
-    filelist.view()
-    df = downloadFiles(filelist)
-    genomes = df.genomes
-    orgtype = df.orgtype
-    stats = labelFiles(genomes.flatten().combine(orgtype)).stats.collectFile() { item -> ["${item[1]}_stats", item[0] ] }
+    df = downloadFile(filelist.filelist.splitText().combine(filelist.orgtype))
+    df.view()
+    stats = labelFile(df).stats.collectFile() { item -> ["${item[1]}_stats", item[0] ] }
     collectStats(stats)
 }
